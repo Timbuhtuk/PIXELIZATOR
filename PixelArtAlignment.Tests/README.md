@@ -1,44 +1,49 @@
-# Проверка выравнивания пиксель-арта
+# Pixel art alignment evaluation
 
-Выравнивание реализовано в отдельной библиотеке `PixelArtAlignment`. Она не вызывает даунскейлер, его квантователь или палитры. Проверяющий код `AlignmentQuality.cs` написан до алгоритма и не использует его сетку, детектор или выбор цвета.
+Alignment is implemented in the separate `PixelArtAlignment` library. It does not invoke the downscaler, quantizer or palettes. The evaluator in `AlignmentQuality.cs` was written before the algorithm and does not reuse its grid, detector or color selection.
 
-## Что означает процент
+## What the percentage means
 
-Эталон — известное исходное пиксельное изображение, увеличенное целыми квадратными блоками. Проверяется весь холст, включая фон и края. Размер ячейки в тесте известен заранее и одинаков для эталона и алгоритма.
+The reference is a known pixel image enlarged into integer square blocks. Evaluation covers the whole canvas, including background and edges. The test cell size is known in advance and is the same for the reference and algorithm.
 
-Для каждого результата вычисляются четыре величины от 0 до 1:
+Four components range from 0 to 1:
 
-- **GridPurity**: доля пикселей, принадлежащих самому частому ARGB внутри каждой эталонной ячейки. Ячейки на краю учитываются по своей фактической площади.
-- **PixelAccuracy**: доля точных совпадений с эталоном на тех же координатах.
-- **ColorRecall**: средняя доля восстановленных пикселей отдельно для каждого эталонного цвета. Большой фон не может скрыть полную потерю редкого цвета.
-- **BoundaryF1**: F1 для горизонтальных и вертикальных переходов между соседними исходными пикселями, с точным совпадением координат.
+- **GridPurity**: fraction of pixels matching the most frequent ARGB within each reference cell. Partial edge cells use their actual area.
+- **PixelAccuracy**: fraction of exact reference matches at the same coordinates.
+- **ColorRecall**: average recovered-pixel fraction calculated separately for each reference color. A large background cannot hide complete loss of a rare color.
+- **BoundaryF1**: F1 for horizontal and vertical transitions between neighboring source pixels, requiring exact coordinate matches.
 
-Итог: `100 × min(GridPurity, PixelAccuracy, ColorRecall, BoundaryF1)`.
-У полностью прозрачных пикселей скрытые RGB не влияют на оценку. Полупрозрачные цвета сравниваются точно, вместе с альфой.
+The final score is `100 × min(GridPurity, PixelAccuracy, ColorRecall, BoundaryF1)`. Hidden RGB in fully transparent pixels does not affect it. Partially transparent colors are compared exactly, including alpha.
 
-Тесты самого оценщика проверяют идеальный результат, пустую заливку, смещение на целую ячейку, неверные цвета и все виды искажений. Заливка и перекраска не проходят, даже если сетка идеальна.
+Evaluator checks cover a perfect result, solid fill, whole-cell translation, wrong colors and every distortion type. A solid fill or recoloring fails even with a perfect grid.
 
-Порог серии зафиксирован до подбора алгоритма: среднее **не ниже 90**, среднее каждого вида искажений **не ниже 90**, худший случай **не ниже 75**. Это оценка восстановления на конкретном наборе, не вероятность правильности произвольного ИИ-изображения. Отдельный файл при `--evaluate` проходит при оценке от 90.
+The series thresholds were set before tuning: overall mean **at least 90**, mean for each distortion type **at least 90**, and worst case **at least 75**. This measures reconstruction on a specific dataset; it is not the probability of correctness for an arbitrary AI-generated image. A single `--evaluate` result passes at 90 or above.
 
-## Наборы и результат
+## Datasets and recorded results
 
-Четыре вида рисунков: прозрачный меч со ступенчатым контуром и одиночными деталями; сцена со зданием и узкими окнами; шахматный узор с редкими цветными точками; случайные прямоугольные фигуры с отверстиями. В каждом шесть состояний: идеальное, общий сдвиг, неодинаковые размеры ячеек, плавное локальное смещение, сглаживание, примеси цвета в 1,8% исходных пикселей. Искажённый вход строится из эталона независимо от алгоритма.
+Four artwork types are used: a transparent sword with a stepped outline and isolated details; a building scene with narrow windows; a checkerboard with rare colored dots; and random rectangular shapes with holes. Each has six conditions: perfect, global shift, unequal cell sizes, smooth local displacement, antialiasing, and color contamination in 1.8% of source pixels. Distorted inputs are generated from references independently of the algorithm.
 
-| Набор | Изображений | Размеры ячеек | Seed | Среднее | Худший |
-|---|---:|---|---|---:|---:|
-| Разработка | 96 | 4, 6, 8, 11 | 101 | 95,93 | 76,44 |
-| Дополнительные регрессии | 96 | 5, 9 | 9137, 52021 | 97,11 | 84,62 |
-| Финальная проверка без настройки на её результатах | 96 | 7, 10 | 34781, 88169 | 96,53 | 76,66 |
+| Dataset | Images | Cell sizes | Seeds | Mean | Worst |
+| --- | ---: | --- | --- | ---: | ---: |
+| Development | 96 | 4, 6, 8, 11 | 101 | 95.93 | 76.44 |
+| Additional regressions | 96 | 5, 9 | 9137, 52021 | 97.11 | 84.62 |
+| Final validation, without tuning against its results | 96 | 7, 10 | 34781, 88169 | 96.53 | 76.66 |
 
-Все три серии прошли все пороги. Второй набор первоначально использовался для проверки на новых данных, выявил редкий провал, после исправления стал регрессионным. Поэтому независимой финальной проверкой служит третий набор. Оценщик, размеры эталонов, искажения и пороги не ослаблялись в ходе настройки.
+These are recorded benchmark results, not a new measurement for every release. All three series met every threshold. The second dataset initially tested unseen data and exposed a rare failure; after the fix it became a regression set. The third dataset therefore provides the independent final validation. The evaluator, reference dimensions, distortions and thresholds were not weakened during tuning.
 
-На финальном наборе: идеальные изображения и сдвиг — 100; неодинаковые размеры — 93,41; локальные смещения — 96,15; сглаживание — 96,34; примеси — 93,30. При запуске бенчмарка отчёты создаются в `artifacts/alignment/`; каждый отчёт содержит все случаи, компоненты оценки и время обработки. PNG `*-reference`, `*-input`, `*-aligned` позволяют сравнить результат визуально.
+On the final set: perfect images and global shift scored 100; unequal sizes 93.41; local displacement 96.15; antialiasing 96.34; contamination 93.30. Benchmark runs write reports under `artifacts/alignment/`, including every case, score components and timing. The `*-reference`, `*-input` and `*-aligned` PNG files support visual comparison.
 
-Проверки инвариантов дополнительно проверяют неизменность исходника, сохранение холста с неполными краевыми ячейками, отсутствие новых видимых цветов и значений альфы, повторное выравнивание, пустые изображения, некорректные параметры и автопоиск на 16 идеальных сетках. Проверка WPF-интерфейса выполняет обе операции независимо, сравнивает даунскейл с библиотекой, проверяет профили, число и вес цветов, альфу предпросмотра, масштаб 800%, ввод и сохранение PNG с защитой исходника. Снимки обычного и минимального окна, расширенных настроек и синтетических изображений сохраняются в `artifacts/wpf/verification`. CLI проверяется своим существующим набором: 57 успешных проверок.
+## Additional checks
 
-## Запуск
+Invariant checks cover source immutability, canvas preservation with partial edge cells, no new visible colors or alpha values, repeated alignment, empty images, invalid options and detection on 16 perfect grids.
 
-Нужен установленный .NET SDK 8 или новее для Windows и .NET 8 Runtime. Команда `dotnet` должна быть доступна в PATH.
+WPF checks run alignment and downscaling independently and compare the latter with the library. They cover profiles, color count and weighting, preview alpha, 800% zoom, input validation and PNG export with source protection. They also cover window controls, library history and deletion, grid reduction, ICO navigation, preview cancellation and narrow layouts. Synthetic images and screenshots are written under `artifacts/wpf/verification`.
+
+The CLI has its own integration suite, including argument validation, image formats, icon export and file protection.
+
+## Running checks
+
+Use Windows with .NET SDK 8 or later and the .NET 8 Runtime. The `dotnet` command must be on PATH. Run from the repository root:
 
 ```powershell
 dotnet run --project PixelArtAlignment.Tests -c Release
@@ -48,10 +53,10 @@ dotnet run --project PixelArtAlignment.Tests -c Release -- --invariants --ui
 dotnet run --project Pixelizator.Cli.Tests -c Release
 ```
 
-Проверка своего результата относительно известного правильного файла:
+Evaluate an output against a known correct image:
 
 ```powershell
 dotnet run --project PixelArtAlignment.Tests -c Release -- --evaluate actual.png reference.png --cell-size 8
 ```
 
-Без эталона можно проверить регулярность сетки, но нельзя честно получить процент сохранения правильных деталей. Автопоиск размера имеет отдельную диагностическую уверенность; она не является приведённой выше оценкой качества. На сильно неоднородной или дробной исходной сетке лучше явно выбрать целый размер выходной ячейки. Произвольные масштабы и временная стабильность анимации в этот набор не входят.
+Without a reference, grid regularity can be measured, but not an honest percentage of correctly preserved detail. Automatic cell detection has its own diagnostic confidence, separate from the quality score above. For highly irregular or fractional input grids, choose an explicit integer output cell size. Arbitrary scales and temporal consistency in animation are outside this test set.

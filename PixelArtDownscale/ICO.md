@@ -1,24 +1,24 @@
-# Создание ICO
+# ICO export
 
-`PixelArtDownscale.IconExporter` — общий экспорт для WPF и CLI. Он принимает файл или `Bitmap`, в том числе результат уменьшения, обработки спрайта, выравнивания или сжатия сетки. Новые зависимости не нужны.
+`PixelArtDownscale.IconExporter` is shared by the desktop application and CLI. It accepts a file or `Bitmap`, including the result of downscaling, sprite processing, grid alignment or cell reduction. No additional dependencies are required.
 
-## Возможности
+## Capabilities
 
-- PNG, JPG/JPEG, BMP, GIF и TIF/TIFF читаются штатным декодером `System.Drawing.Bitmap`. У GIF берётся первый кадр, у TIFF — первая страница. При конвертации файла учитывается EXIF-ориентация.
-- Один ICO содержит несколько квадратных кадров. По умолчанию: **16, 24, 32, 48, 64, 128, 256 px**. Можно задать любой неповторяющийся набор целых размеров от 1 до 256; кадры записываются по возрастанию.
-- Цвет и альфа сохраняются в 32-битных PNG внутри ICO. При масштабировании `Smooth` выполняется интерполяция; `NearestNeighbor` выбирает исходные пиксели без смешивания цветов. В масштабе 1:1 RGBA копируются точно.
-- Каждый размер рассчитывается непосредственно из переданного изображения. Маленькие исходники увеличиваются до заданных размеров.
-- По умолчанию изображение вписывается в квадрат по центру с сохранением пропорций и прозрачными полями (`Contain`). `Cover` обрезает центральный квадрат и заполняет кадр; `Stretch` растягивает всё изображение в квадрат.
-- Существующие файлы защищены от случайной замены. `overwrite: true` разрешает замену результата, но `Convert` не позволяет использовать путь исходника как выходной.
-- Сначала формируется ICO в памяти, затем записывается временный файл рядом с результатом и перемещается на его место. Ошибка обработки и отмена до перемещения сохраняют прежний результат. Недостающие выходные папки создаются автоматически.
+- PNG, JPG/JPEG, BMP, GIF and TIF/TIFF use the standard `System.Drawing.Bitmap` decoder. GIF uses the first frame; TIFF uses the first page. File conversion honors EXIF orientation.
+- One ICO contains multiple square frames. Defaults are **16, 24, 32, 48, 64, 128 and 256 px**. Any unique integer sizes from 1 to 256 are accepted and written in ascending order.
+- Color and alpha are stored in 32-bit PNG frames inside the ICO. `Smooth` interpolates while resizing; `NearestNeighbor` selects source pixels without color blending. At 1:1 scale, RGBA values are copied exactly.
+- Every size is generated directly from the supplied image. Small inputs are enlarged when necessary.
+- `Contain` (the default) centers the image, preserves its aspect ratio and adds transparent padding. `Cover` crops a centered square to fill the frame; `Stretch` stretches the whole image into a square.
+- Existing files are protected. `overwrite: true` permits replacement, but `Convert` rejects using the source path as the output.
+- The complete ICO is encoded in memory, written to a temporary file beside the destination, then moved into place. Processing errors or cancellation before that move preserve an existing output. Missing destination directories are created.
 
-## Удаление однотонного фона
+## Solid background removal
 
-В `IconExportOptions` включите `RemoveBackground = true`. `BackgroundTolerance` задаёт допуск 0–100% (по умолчанию 8), `BackgroundColor` — явный цвет или `null` для определения по краям. Обработка выполняется один раз до масштабирования; все похожие пиксели, включая замкнутые участки, становятся прозрачными. RGB и альфа остальных пикселей сохраняются. В автоматическом режиме преимущественно прозрачный край сохраняет изображение без изменений. Для уже прозрачного изображения можно указать цвет явно.
+Set `RemoveBackground = true` in `IconExportOptions`. `BackgroundTolerance` ranges from 0 to 100% (default 8). `BackgroundColor` accepts an explicit color or `null` to infer it from the edges. Removal runs once before resizing. All matching pixels, including enclosed areas, become transparent; other pixels retain their RGB and alpha. In automatic mode, a predominantly transparent border leaves the image unchanged. An explicit color can be supplied for an already transparent image.
 
-`BackgroundRemover.Remove` возвращает отдельный Bitmap для предпросмотра; он не меняет исходник и поддерживает отмену. `CreateFrame` принимает подготовленное изображение, а `Encode`, `Save` и `Convert` применяют опцию самостоятельно. Это удаление однотонного цвета, без выделения объекта на сложном фотографическом фоне. Если объект содержит цвет фона, совпадающие пиксели тоже будут удалены.
+`BackgroundRemover.Remove` returns a separate preview bitmap, leaves the source unchanged and supports cancellation. `CreateFrame` accepts a prepared image; `Encode`, `Save` and `Convert` apply the option themselves. This removes a solid color, without segmenting an object from a complex photographic background. Foreground pixels matching the background color will also be removed.
 
-## Из файла
+## Converting a file
 
 ```csharp
 using PixelArtDownscale;
@@ -33,7 +33,7 @@ IconExporter.Convert("sprite.png", "sprite.ico", new IconExportOptions
 });
 ```
 
-## Из результата обработки
+## Exporting a processed result
 
 ```csharp
 using System.Drawing;
@@ -58,35 +58,38 @@ IconExporter.Save(processed, "sprite.ico", new IconExportOptions
 });
 ```
 
-Здесь размер исходника должен быть не меньше 32 × 32: это ограничение существующего уменьшения. Сам экспорт ICO допускает увеличение. Экспортёр не запускает квантование или режим спрайта повторно; настройки палитры и порога альфы применяются на этапе обработки. Для обычной фотографии или логотипа достаточно `Convert`; подготовка через `PixelArtDownscaler` нужна только для желаемого пиксельного эффекта.
+This example needs an input at least 32 × 32 because of the downscaler's size constraint. ICO export itself supports enlargement. The exporter does not rerun quantization or sprite processing; palette and alpha-threshold options apply during the preceding processing stage. Use `Convert` directly for an ordinary photo or logo, and `PixelArtDownscaler` when a pixel-art effect is wanted.
 
-## API для интеграции
+## Integration API
 
-| Метод | Назначение |
-|---|---|
-| `Convert(inputPath, outputPath, options?, overwrite?, cancellationToken?)` | Загрузить файл, применить EXIF-ориентацию, создать и сохранить ICO |
-| `Save(source, outputPath, options?, overwrite?, cancellationToken?)` | Сохранить исходник или выбранный результат из памяти |
-| `Encode(source, options?, cancellationToken?)` | Получить полный ICO как `byte[]` без файловых операций |
-| `CreateFrame(source, size, resizeMode?, fitMode?, cancellationToken?)` | Создать один кадр `Bitmap` для предпросмотра |
+| Method | Purpose |
+| --- | --- |
+| `Convert(inputPath, outputPath, options?, overwrite?, cancellationToken?)` | Load a file, apply EXIF orientation, create and save an ICO |
+| `Save(source, outputPath, options?, overwrite?, cancellationToken?)` | Save an in-memory source or selected result |
+| `Encode(source, options?, cancellationToken?)` | Return a complete ICO as `byte[]` without file operations |
+| `CreateFrame(source, size, resizeMode?, fitMode?, cancellationToken?)` | Create one preview `Bitmap` |
 
-`Save`, `Encode` и `CreateFrame` не изменяют и не освобождают переданный `Bitmap` и не применяют к нему EXIF-поворот: предполагается, что он уже отображается в нужной ориентации. Возвращённый `CreateFrame` объект освобождает вызывающий код. Не изменяйте исходный `Bitmap` одновременно с экспортом; для фоновой работы интерфейс может передать его копию. Методы синхронные, для WPF используйте `Task.Run`. Отмена проверяется между кадрами, в строках точного масштабирования и перед записью результата; штатное декодирование и сглаживание GDI+ не прерываются посередине вызова.
+`Save`, `Encode` and `CreateFrame` neither modify nor dispose the supplied bitmap and do not apply EXIF rotation; it is assumed to have the intended orientation already. The caller disposes the bitmap returned by `CreateFrame`. Do not modify the source during export; a UI can pass a copy for background work.
 
-Некорректные размеры, режимы или выходное расширение вызывают `ArgumentException` / `ArgumentOutOfRangeException`; занятый выход — `IOException`; отмена — `OperationCanceledException`. Ошибки декодера и файловой системы передаются вызывающему коду. По ним GUI/CLI должен показать понятное сообщение.
+Methods are synchronous; use `Task.Run` for WPF background processing. Cancellation is checked between frames, within exact-resizing rows and before writing the output. Standard GDI+ decoding and smooth resizing cannot be interrupted midway through a call.
 
-## Ограничения и совместимость
+Invalid sizes, modes or output extensions raise `ArgumentException` / `ArgumentOutOfRangeException`; an occupied destination raises `IOException`; cancellation raises `OperationCanceledException`. Decoder and filesystem errors propagate to the caller, which should present a useful message.
 
-ICO содержит PNG-кадры и предназначен для современных Windows. Это [формат, поддерживаемый Windows начиная с Vista](https://devblogs.microsoft.com/oldnewthing/20101022-00/?p=12473); старые редакторы иконок могут его не читать. Экспорт в 4/8-битный ICO с DIB и масками не реализован. Векторные SVG, WebP, AVIF и HEIC не входят в поддерживаемый набор входов.
+## Format and compatibility
 
-Для WPF-просмотра готового ICO используйте `IconBitmapDecoder`; для предпросмотра до сохранения — `CreateFrame`. В `System.Drawing.Icon` из .NET 8 выбор кадра 256 px из многоразмерного файла может вернуть меньший размер из-за трактовки нулевого поля ширины. Проверки отдельно читают все кадры через WIC и загружают размеры 16–256 штатной функцией Windows `LoadImageW`.
+The ICO contains PNG frames and targets modern Windows. Older icon editors may not support these frames. Exporting 4/8-bit DIB-based ICO files with masks is not implemented. SVG, WebP, AVIF and HEIC inputs are outside the supported formats.
 
-## Проверки и состояние интерфейсов
+For WPF viewing of a saved ICO, use `IconBitmapDecoder`; for a preview before saving, use `CreateFrame`. In .NET 8, `System.Drawing.Icon` may select a smaller frame when asked for 256 px from a multi-size ICO because of the zero-valued width field. Checks decode every frame with WIC and load sizes 16–256 through Windows `LoadImageW`.
+
+## Checks and interfaces
+
+Run from the repository root:
 
 ```powershell
 dotnet build Pixelizator.sln -c Release
 dotnet run --project PixelArtAlignment.Tests -c Release --no-build -- --invariants
 ```
 
-Восемь групп `IconExportChecks` проверяют каталог ICO, PNG-данные, WIC и загрузчик Windows, RGBA и неизменность исходника, способы масштабирования, основные форматы, TIFF/EXIF, результат существующего уменьшения, ограничения, отмену и защиту файлов. Они входят также в проверки `Build-Standalone.ps1`.
+The eight `IconExportChecks` groups cover the ICO directory, PNG data, WIC and Windows loading, RGBA and source immutability, resizing modes, major input formats, TIFF/EXIF, existing downscale results, constraints, cancellation and file protection. They are also run by `Build-Standalone.ps1`.
 
-Общая библиотека подключена к CLI командой `pixelizator ico`; её параметры описаны в корневом `README.md` и во встроенной справке `pixelizator ico --help`. В WPF второй баннер на главной открывает отдельный экран ICO с загрузкой и перетаскиванием, выбором исходника или результата редактора, размерами, режимами вписывания и предпросмотром. Проверки `IconWorkspaceChecks` входят в `--ui` и проверяют также навигацию, отмену устаревшего предпросмотра, защиту файлов и узкую компоновку.
-
+The CLI exposes the shared library through `tessera ico`; see the [CLI reference](../docs/CLI.md) and `tessera ico --help`. In the desktop application, the second home banner opens the ICO workspace with file loading and dropping, editor source/result selection, sizes, fitting modes and previews. `IconWorkspaceChecks` run with `--ui` and also cover navigation, stale-preview cancellation, file protection and narrow layouts.

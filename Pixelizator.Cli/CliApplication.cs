@@ -10,14 +10,14 @@ namespace Pixelizator.Cli;
 internal static class CliApplication
 {
     public const string Help = """
-        Pixelizator — уменьшение изображений в стиле pixel art.
+        Tessera — уменьшение изображений в стиле pixel art.
 
-        Использование: pixelizator <изображение> [параметры]
-                       pixelizator --input <изображение> --output <результат.png>
-                       pixelizator align <изображение> --cell-size 8
-                       pixelizator ico <изображение> -o <иконка.ico>
-        Отдельное выравнивание сетки без даунскейла: pixelizator align --help.
-        Создание многоразмерной иконки Windows: pixelizator ico --help.
+        Использование: tessera <изображение> [параметры]
+                       tessera --input <изображение> --output <результат.png>
+                       tessera align <изображение> --cell-size 8
+                       tessera ico <изображение> -o <иконка.ico>
+        Отдельное выравнивание сетки без даунскейла: tessera align --help.
+        Создание многоразмерной иконки Windows: tessera ico --help.
 
         Файлы:
           -i, --input PATH           Исходное изображение.
@@ -67,9 +67,9 @@ internal static class CliApplication
         Коды возврата: 0 — успех; 1 — ошибка обработки/файла; 2 — ошибка параметров.
 
         Примеры:
-          pixelizator input.png -o result.png --palette db32 --dithering
-          pixelizator photo.jpg --width 64 --height 64 --block-mode manual --edge 80
-          pixelizator photo.png -o result.png --preview-output preview.png --json
+          tessera input.png -o result.png --palette db32 --dithering
+          tessera photo.jpg --width 64 --height 64 --block-mode manual --edge 80
+          tessera photo.png -o result.png --preview-output preview.png --json
         """;
 
     public static int Run(string[] args, TextWriter output, TextWriter error)
@@ -164,7 +164,7 @@ internal static class CliApplication
         catch (CliUsageException ex)
         {
             error.WriteLine($"Ошибка параметров: {ex.Message}");
-            error.WriteLine("Справка: pixelizator --help");
+            error.WriteLine("Справка: tessera --help");
             return 2;
         }
         catch (Exception ex)

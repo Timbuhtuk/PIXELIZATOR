@@ -7,8 +7,8 @@ namespace Pixelizator.Cli;
 internal static class GridAlignmentCommand
 {
     internal const string Help = """
-        Pixelizator align — отдельное выравнивание пиксельной сетки.
-        Использование: pixelizator align input.png [-o output.png] [--cell-size 8]
+        Tessera align — отдельное выравнивание пиксельной сетки.
+        Использование: tessera align input.png [-o output.png] [--cell-size 8]
 
           -i, --input PATH       Исходное изображение.
           -o, --output PATH      Только PNG; по умолчанию <имя>_aligned.png.

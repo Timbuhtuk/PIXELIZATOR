@@ -1,26 +1,26 @@
-# Выравнивание сетки отдельно от даунскейла
+# Pixel grid alignment
 
-Готовое приложение: `artifacts/standalone/Pixelizator.exe`.
-Готовый CLI: `artifacts/cli/pixelizator.exe`. Обе сборки Windows x64 автономные.
+Grid alignment is independent of downscaling and palette selection.
 
-В приложении откройте изображение, задайте размер ячейки в разделе **«Выравнивание сетки»**, нажмите **«Выровнять сетку»** и сохраните PNG. Можно включить автоматический поиск размера. Настройки даунскейла и палитры на эту операцию не влияют. Кнопка «Обработать» запускает прежний даунскейл от исходного изображения. Чтобы сжать выровненную сетку, выберите результат и нажмите «Ячейка сетки → 1 пиксель». Для дальнейшей обработки перетащите результат в ленту исходников.
+The standalone Windows x64 desktop build is `artifacts/standalone/Tessera.exe`; the CLI is `artifacts/cli/tessera.exe`. Download packaged builds from [GitHub Releases](https://github.com/Timbuhtuk/PIXELIZATOR/releases/latest).
+
+In the editor, open an image, set a cell size in the grid alignment section and run alignment. Automatic size detection is optional. Save the result as PNG. Downscaling and palette settings do not affect alignment; the Process action still downscales the original source. To compress the aligned grid, select the result and reduce each grid cell to one pixel. Drag a result into the source filmstrip for further processing.
 
 ```powershell
-.\artifacts\cli\pixelizator.exe align input.png -o aligned.png --cell-size 4
-.\artifacts\cli\pixelizator.exe align input.png -o aligned-auto.png --json
-.\artifacts\cli\pixelizator.exe align --help
+.\artifacts\cli\tessera.exe align input.png -o aligned.png --cell-size 4
+.\artifacts\cli\tessera.exe align input.png -o aligned-auto.png --json
+.\artifacts\cli\tessera.exe align --help
 ```
 
-Холст сохраняет исходную ширину и высоту. Выход состоит из одинаковых квадратных ячеек; неполные ячейки по правому и нижнему краю сохраняются. Каждый блок получает ARGB одного из исходных пикселей; палитра не сокращается, новые видимые цвета не вычисляются. Скрытые RGB полностью прозрачных пикселей могут нормализоваться в нули. Уже выровненные изображения сохраняются точно. PNG обязателен, чтобы сжатие не разрушило сетку.
+The canvas retains its original width and height. Output uses equal square cells, with partial cells retained at the right and bottom edges. Each cell receives the ARGB value of an original pixel; the algorithm does not reduce the palette or compute new visible colors. Hidden RGB values in fully transparent pixels may become zero. Already aligned images are preserved exactly. PNG is required to avoid compression damage to the grid.
 
-## Как устроен алгоритм
+## Algorithm
 
-1. Строится вспомогательная карта переходов с учётом альфы; одиночные примеси подавляются только в этой карте. Исходные пиксели для выбора цвета остаются доступными без изменений.
-2. Размер задаётся вручную или оценивается по повторяемости переходов. Для регулярных рисунков проверяется общая решётка, чтобы не спутать пиксель с повторяющимся узором из двух пикселей.
-3. Для чётких границ динамическое программирование выбирает упорядоченные линии сетки. Штрафуются переходы внутри ячейки, слишком большие смещения и нарушения размера. Слабая оценка общего смещения не навязывается рисунку.
-4. Для размытых или локально смещённых границ оценивается местная фаза сетки. Она согласуется с предыдущей полосой и ограничивается относительно общей сетки. Области считывания сохраняют положительную ширину.
-5. В каждой области голосуют исходные ARGB с весом площади пересечения и предпочтением центра. Победивший исходный цвет заполняет соответствующую ровную выходную ячейку.
-
+1. Build an alpha-aware transition map, suppressing isolated contamination only in that auxiliary map. Original pixels remain unchanged and available for color selection.
+2. Use an explicit cell size or estimate it from recurring transitions. For regular patterns, check the global lattice to avoid confusing a two-pixel pattern with one pixel.
+3. For sharp boundaries, use dynamic programming to select ordered grid lines. Penalize transitions inside cells, excessive displacement and size violations. A weak global-shift estimate is not forced onto the artwork.
+4. For blurred or locally shifted boundaries, estimate the local grid phase, keeping it consistent with the previous strip and bounded relative to the global grid. Sampling regions retain positive width.
+5. Vote among original ARGB values in each region, weighted by overlap area and a preference for the center. Fill the corresponding regular output cell with the winning original color.
 
 ## API
 
@@ -30,6 +30,6 @@ using var result = new PixelGridAligner().Align(source,
 result.Aligned.Save("aligned.png", ImageFormat.Png);
 ```
 
-`CellSize = null` включает автопоиск, `Adaptive = false` отключает подстройку к локальному смещению. В `GridAlignmentResult` возвращаются изображение, размер ячейки, диагностическая уверенность детектора и время. Результат нужно освобождать через `Dispose`; исходный `Bitmap` принадлежит вызывающему коду.
+`CellSize = null` enables automatic detection. `Adaptive = false` disables adaptation to local shifts. `GridAlignmentResult` contains the image, cell size, diagnostic detection confidence and timing. Dispose the result; the input `Bitmap` remains owned by the caller.
 
-Метод не гарантирует восстановления деталей, которые меньше выбранной ячейки, и не восстанавливает единственное «правильное» художественное решение из неоднозначного изображения. Проверенный диапазон и воспроизводимые оценки описаны в [протоколе тестов](../PixelArtAlignment.Tests/README.md).
+The method cannot guarantee recovery of details smaller than the chosen cell, or infer a uniquely correct artistic interpretation of an ambiguous image. See the [evaluation protocol](../PixelArtAlignment.Tests/README.md) for the tested range and reproducible measurements.

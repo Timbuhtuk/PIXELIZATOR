@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:DomainColorTest"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="PIXELIZATOR" Icon="Assets/app.ico" Width="1220" Height="880" MinWidth="560" MinHeight="700"
+        Title="TESSERA" Icon="Assets/app.ico" Width="1220" Height="880" MinWidth="560" MinHeight="700"
         WindowStyle="SingleBorderWindow" ResizeMode="CanResize" WindowStartupLocation="CenterScreen" Background="#101010" Foreground="#EEEEEE"
         FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True" AllowDrop="True">
     <shell:WindowChrome.WindowChrome>
@@ -77,7 +77,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
                         <Image Source="Assets/app-icon.png" Width="18" Height="18" Margin="0,0,9,0"/>
-                        <TextBlock Text="PIXELIZATOR" FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="TESSERA" FontSize="13" FontWeight="SemiBold"/>
                     </StackPanel>
                 </DockPanel>
             </Border>

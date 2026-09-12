@@ -6,7 +6,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>pixelizator</AssemblyName>
+    <AssemblyName>tessera</AssemblyName>
+    <Product>Tessera</Product>
+    <AssemblyTitle>Tessera CLI</AssemblyTitle>
     <RootNamespace>Pixelizator.Cli</RootNamespace>
   </PropertyGroup>
   <ItemGroup>

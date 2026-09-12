@@ -33,7 +33,7 @@ jobs:
         run: ./Build-Standalone.ps1 -Version "1.0.$env:GITHUB_RUN_NUMBER"
       - name: Smoke test standalone CLI
         run: |
-          & ./artifacts/cli/pixelizator.exe --version
+          & ./artifacts/cli/tessera.exe --version
           if ($LASTEXITCODE -ne 0) { throw 'Standalone CLI failed' }
       - name: Store release files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -43,9 +43,9 @@ jobs:
           retention-days: 14
           compression-level: 0
           path: |
-            artifacts/standalone/Pixelizator.exe
-            artifacts/Pixelizator-win-x64.zip
-            artifacts/Pixelizator-cli-win-x64.zip
+            artifacts/standalone/Tessera.exe
+            artifacts/Tessera-win-x64.zip
+            artifacts/Tessera-cli-win-x64.zip
             artifacts/SHA256SUMS.txt
 
   release:
@@ -89,7 +89,17 @@ jobs:
                   exit 0
               }
           } else {
-              Invoke-Gh release create $tag --target $env:GITHUB_SHA --title "Pixelizator $tag" --generate-notes --draft
+              $notes = @'
+          Tessera is a standalone Windows app for preparing pixel art and icons.
+          It began as a way to correct uneven grids and inconsistent pixel sizes in AI-generated pixel art.
+
+          Align grids, reduce cells to single pixels, downscale images, choose palettes, keep result histories and export multi-size ICO files with transparency. Optional solid-color background removal runs locally with adjustable tolerance.
+
+          Download Tessera.exe or Tessera-win-x64.zip for the desktop app, or Tessera-cli-win-x64.zip for the CLI. No .NET installation is required. SHA256SUMS.txt contains the download checksums.
+
+          Previously named Pixelizator. Existing libraries remain at %LOCALAPPDATA%\Pixelizator\Library. The application interface currently uses Russian labels.
+          '@
+              Invoke-Gh release create $tag --target $env:GITHUB_SHA --title "Tessera $tag" --notes $notes --generate-notes --draft
           }
 
           $files = Get-ChildItem release-files -Recurse -File

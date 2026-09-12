@@ -7,8 +7,9 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Product>Pixelizator</Product>
-    <Description>Pixel art image studio</Description>
+    <Product>Tessera</Product>
+    <AssemblyTitle>Tessera</AssemblyTitle>
+    <Description>Tessera — pixel art and icon studio</Description>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 

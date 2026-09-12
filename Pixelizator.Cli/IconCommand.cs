@@ -8,8 +8,8 @@ namespace Pixelizator.Cli;
 internal static class IconCommand
 {
     internal const string Help = """
-        Pixelizator ico — создание многоразмерной иконки Windows.
-        Использование: pixelizator ico input.png [-o output.ico] [параметры]
+        Tessera ico — создание многоразмерной иконки Windows.
+        Использование: tessera ico input.png [-o output.ico] [параметры]
 
           -i, --input PATH       PNG, JPG/JPEG, BMP, GIF или TIFF.
           -o, --output PATH      Файл ICO; по умолчанию <имя>.ico.
