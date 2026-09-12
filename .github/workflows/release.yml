@@ -1,0 +1,99 @@
+name: Build and release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and checks (Windows x64)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 8.0.x
+      - name: Build, test and package desktop and CLI
+        run: ./Build-Standalone.ps1 -Version "1.0.$env:GITHUB_RUN_NUMBER"
+      - name: Smoke test standalone CLI
+        run: |
+          & ./artifacts/cli/pixelizator.exe --version
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone CLI failed' }
+      - name: Store release files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-files
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+          path: |
+            artifacts/standalone/Pixelizator.exe
+            artifacts/Pixelizator-win-x64.zip
+            artifacts/Pixelizator-cli-win-x64.zip
+            artifacts/SHA256SUMS.txt
+
+  release:
+    name: Publish GitHub release
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-files
+          path: release-files
+      - name: Publish verified files and release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Invoke-Gh {
+              $result = & gh @args
+              if ($LASTEXITCODE -ne 0) { throw "GitHub CLI failed: $args" }
+              $result
+          }
+
+          # A delayed build or an old rerun must not replace the current release.
+          $head = Invoke-Gh api "repos/$env:GH_REPO/git/ref/heads/main" --jq '.object.sha'
+          if ($head -ne $env:GITHUB_SHA) {
+              'A newer commit is already on main; skipping this release.' >> $env:GITHUB_STEP_SUMMARY
+              exit 0
+          }
+
+          $tag = "v1.0.$env:GITHUB_RUN_NUMBER"
+          $existing = & gh release view $tag --json isDraft
+          if ($LASTEXITCODE -eq 0) {
+              if (!(($existing | ConvertFrom-Json).isDraft)) {
+                  "Release $tag is already published." >> $env:GITHUB_STEP_SUMMARY
+                  exit 0
+              }
+          } else {
+              Invoke-Gh release create $tag --target $env:GITHUB_SHA --title "Pixelizator $tag" --generate-notes --draft
+          }
+
+          $files = Get-ChildItem release-files -Recurse -File
+          if ($files.Count -ne 4) { throw 'Expected four release assets' }
+          Invoke-Gh release upload $tag @($files.FullName) --clobber
+          Invoke-Gh release edit $tag --draft=false --latest
+          "Published [$tag](https://github.com/$env:GH_REPO/releases/tag/$tag)." >> $env:GITHUB_STEP_SUMMARY

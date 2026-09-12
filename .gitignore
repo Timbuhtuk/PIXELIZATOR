@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+.vs/
+artifacts/
+*.csproj.user
+*.pubxml.user
+.idea/
+.env
+.env.*
+*.pfx
+*.p12

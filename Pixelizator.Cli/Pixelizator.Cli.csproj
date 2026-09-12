@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>pixelizator</AssemblyName>
+    <RootNamespace>Pixelizator.Cli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PixelArtDownscale\PixelArtDownscale.csproj" />
+    <ProjectReference Include="..\PixelArtAlignment\PixelArtAlignment.csproj" />
+    <InternalsVisibleTo Include="Pixelizator.Cli.Tests" />
+  </ItemGroup>
+</Project>

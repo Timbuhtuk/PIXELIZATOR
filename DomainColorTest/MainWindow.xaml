@@ -1,0 +1,277 @@
+<Window x:Class="DomainColorTest.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:DomainColorTest"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="PIXELIZATOR" Icon="Assets/app.ico" Width="1220" Height="880" MinWidth="560" MinHeight="700"
+        WindowStyle="SingleBorderWindow" ResizeMode="CanResize" WindowStartupLocation="CenterScreen" Background="#101010" Foreground="#EEEEEE"
+        FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True" AllowDrop="True">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="40" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+    <Window.Resources><ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="Theme.xaml"/></ResourceDictionary.MergedDictionaries>
+        <Style x:Key="FilmstripItem" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,6,0"/><Setter Property="Padding" Value="5"/>
+            <Setter Property="Foreground" Value="#EEEEEE"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                <Border x:Name="Frame" BorderBrush="#3A3A3A" BorderThickness="1" CornerRadius="0" Background="#191919" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="#E5E5E5"/><Setter TargetName="Frame" Property="Background" Value="#333333"/></Trigger>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="#E5E5E5"/></Trigger>
+                    <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="White"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style x:Key="Filmstrip" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="84"/><Setter Property="Padding" Value="0"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBox">
+                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                    <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False"
+                                  CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
+                                  HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                  VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                        <ItemsPresenter/>
+                    </ScrollViewer>
+                </Border>
+            </ControlTemplate></Setter.Value></Setter>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/><Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/><Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource FilmstripItem}"/>
+            <Setter Property="ItemsPanel"><Setter.Value><ItemsPanelTemplate><VirtualizingStackPanel Orientation="Horizontal"/></ItemsPanelTemplate></Setter.Value></Setter>
+            <Setter Property="ItemTemplate"><Setter.Value><DataTemplate>
+                <Grid Width="112" ToolTip="{Binding Description}">
+                    <StackPanel>
+                    <Border Height="40" Background="#0D0D0D"><Image Source="{Binding Thumbnail}" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/></Border>
+                    <TextBlock Text="{Binding Label}" FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <Button Style="{StaticResource RemoveThumbnailButton}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            ToolTip="{Binding RemoveDescription}" AutomationProperties.Name="{Binding RemoveDescription}"
+                            Click="RemoveLibraryItem"/>
+                </Grid>
+            </DataTemplate></Setter.Value></Setter>
+        </Style>
+    </ResourceDictionary></Window.Resources>
+    <Grid x:Name="rootLayout">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel>
+            <Border x:Name="titleBar" Height="40" Background="#151515" BorderBrush="#343434" BorderThickness="0,0,0,1">
+                <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button x:Name="minimizeButton" Style="{StaticResource CaptionButton}" Click="MinimizeWindow" ToolTip="Свернуть" AutomationProperties.Name="Свернуть" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Path Data="M 0,5 L 10,5" Width="10" Height="10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
+                        </Button>
+                        <Button x:Name="maximizeButton" Style="{StaticResource MaximizeCaptionButton}" Click="ToggleMaximizeWindow" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Path Width="10" Height="10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1">
+                                <Path.Style><Style TargetType="Path">
+                                    <Setter Property="Data" Value="M 0,0 L 10,0 L 10,10 L 0,10 Z"/>
+                                    <Style.Triggers><DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized"><Setter Property="Data" Value="M 2,0 L 10,0 L 10,8 M 0,2 L 8,2 L 8,10 L 0,10 Z"/></DataTrigger></Style.Triggers>
+                                </Style></Path.Style>
+                            </Path>
+                        </Button>
+                        <Button x:Name="closeButton" Style="{StaticResource CloseCaptionButton}" Click="CloseWindow" ToolTip="Закрыть" AutomationProperties.Name="Закрыть" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Path Data="M 0,0 L 10,10 M 10,0 L 0,10" Width="10" Height="10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <Image Source="Assets/app-icon.png" Width="18" Height="18" Margin="0,0,9,0"/>
+                        <TextBlock Text="PIXELIZATOR" FontSize="13" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <DockPanel x:Name="editorToolbar" Margin="18,10">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                    <Button x:Name="openButton" Content="Открыть…" Margin="0,0,8,0" ToolTip="Открыть изображения (Ctrl+O)"/>
+                    <Button x:Name="processButton" Content="Обработать" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" IsDefault="True" IsEnabled="False"/>
+                    <Button x:Name="saveButton" Content="Сохранить…" IsEnabled="False"/>
+                </StackPanel>
+                <Button x:Name="backToLibraryButton" Content="←" Width="34" Height="32" DockPanel.Dock="Left" Margin="0,0,12,0" Click="GoToLibrary" ToolTip="К библиотеке" AutomationProperties.Name="К библиотеке"/>
+                <TextBlock x:Name="fileLabel" Text="Откройте изображение" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="0,0,12,0" Foreground="#ABABAB"/>
+            </DockPanel>
+        </StackPanel>
+        <ScrollViewer x:Name="workspaceHost" Grid.Row="1" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled">
+        <Grid x:Name="workspaceGrid">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="386" MinWidth="350"/><ColumnDefinition Width="6"/><ColumnDefinition Width="*" MinWidth="470"/></Grid.ColumnDefinitions>
+            <ScrollViewer x:Name="settingsScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="settingsPanel" Margin="16,0,12,12">
+                    <GroupBox Header="Выравнивание сетки">
+                        <StackPanel>
+                            <TextBlock Text="Отдельная операция. Размер холста сохраняется, цвета берутся из исходника." Style="{StaticResource Hint}"/>
+                            <DockPanel Margin="0,3"><TextBlock Text="Ячейка, px" Width="132"/><local:IntegerInput x:Name="gridCellInput" Minimum="2" Maximum="256" Value="8" AutomationProperties.Name="Размер ячейки"/></DockPanel>
+                            <CheckBox x:Name="detectGridInput" Content="Определить размер автоматически"/>
+                            <Button x:Name="alignButton" Content="Выровнять сетку" IsEnabled="False" Margin="0,4,0,0"/>
+                            <Button x:Name="compactGridButton" Content="Ячейка сетки → 1 пиксель" IsEnabled="False" Margin="0,6,0,0" ToolTip="Сначала выберите выровненный результат"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Режим обработки">
+                        <StackPanel>
+                            <UniformGrid Columns="3">
+                                <RadioButton x:Name="backgroundMode" Content="Фон" Style="{StaticResource ModeButton}"/>
+                                <RadioButton x:Name="sceneMode" Content="Сцена" Style="{StaticResource ModeButton}"/>
+                                <RadioButton x:Name="detailsMode" Content="Детали" Style="{StaticResource ModeButton}"/>
+                            </UniformGrid>
+                            <TextBlock x:Name="modeDescription" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="profileState" FontSize="12" Margin="0,2,0,8"/>
+                            <Button x:Name="resetProfileButton" Content="Вернуть настройки режима"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Размер результата">
+                        <StackPanel>
+                            <DockPanel Margin="0,3"><TextBlock Text="Ширина, px" Width="132"/><local:IntegerInput x:Name="widthInput" Minimum="1" Maximum="3840" Value="48" AutomationProperties.Name="Ширина результата"/></DockPanel>
+                            <DockPanel Margin="0,3"><TextBlock Text="Высота, px" Width="132"/><local:IntegerInput x:Name="heightInput" Minimum="1" Maximum="2160" Value="48" AutomationProperties.Name="Высота результата"/></DockPanel>
+                            <CheckBox x:Name="aspectLock" Content="Сохранять пропорции исходника"/>
+                            <TextBlock x:Name="sizeHint" Style="{StaticResource Hint}"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <CheckBox x:Name="advancedToggle" Content="Расширенные настройки"/>
+                    <StackPanel x:Name="advancedPanel" Visibility="Collapsed">
+                        <GroupBox Header="Кадр и прозрачность">
+                            <StackPanel>
+                                <CheckBox x:Name="spriteInput" Content="Весь кадр и прозрачность"/>
+                                <StackPanel x:Name="alphaControls">
+                                    <DockPanel Margin="0,3"><TextBlock Text="Заполнение, %" Width="132"/><local:IntegerInput x:Name="alphaInput" Minimum="1" Maximum="100" Value="50" AutomationProperties.Name="Порог заполнения"/></DockPanel>
+                                    <TextBlock Style="{StaticResource Hint}" Text="Меньше — остаётся больше тонких краёв. Больше — силуэт сужается."/>
+                                </StackPanel>
+                                <StackPanel x:Name="cropControls">
+                                    <DockPanel Margin="0,3"><TextBlock Text="По горизонтали" Width="132"/><ComboBox x:Name="cropHorizontalInput" SelectedIndex="0"><ComboBoxItem Content="Центр"/><ComboBoxItem Content="Слева"/><ComboBoxItem Content="Справа"/></ComboBox></DockPanel>
+                                    <DockPanel Margin="0,3"><TextBlock Text="По вертикали" Width="132"/><ComboBox x:Name="cropVerticalInput" SelectedIndex="0"><ComboBoxItem Content="Центр"/><ComboBoxItem Content="Сверху"/><ComboBoxItem Content="Снизу"/></ComboBox></DockPanel>
+                                    <TextBlock Style="{StaticResource Hint}" Text="Привязка области обрезки к целой сетке."/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Цвет">
+                            <StackPanel>
+                                <DockPanel Margin="0,3"><TextBlock Text="Квантование" Width="132"/><ComboBox x:Name="quantizationInput" SelectedIndex="1"><ComboBoxItem Content="Median Cut"/><ComboBoxItem Content="K-Means LAB"/><ComboBoxItem Content="K-Means Linear"/></ComboBox></DockPanel>
+                                <DockPanel Margin="0,3"><TextBlock Text="Число цветов" Width="132"/><local:IntegerInput x:Name="quantizationColorsInput" Minimum="1" Maximum="4096" Value="64" AutomationProperties.Name="Число цветов"/></DockPanel>
+                                <CheckBox x:Name="colorWeightsInput" Content="Учитывать частоту цветов"/>
+                                <TextBlock Style="{StaticResource Hint}" Text="Число цветов: 1–4096, по умолчанию 64. Учёт частоты даёт больший вес распространённым цветам."/>
+                                <DockPanel Margin="0,3"><TextBlock Text="Палитра" Width="132"/><ComboBox x:Name="paletteInput" SelectedIndex="5"><ComboBoxItem Content="Без палитры"/><ComboBoxItem Content="DB16"/><ComboBoxItem Content="DB32"/><ComboBoxItem Content="NES"/><ComboBoxItem Content="GameBoy"/><ComboBoxItem Content="Шаг RGB"/></ComboBox></DockPanel>
+                                <DockPanel x:Name="stepControls" Margin="0,3"><TextBlock Text="Шаг RGB" Width="132"/><local:IntegerInput x:Name="paletteStepInput" Minimum="1" Maximum="255" Value="16" AutomationProperties.Name="Шаг RGB"/></DockPanel>
+                                <CheckBox x:Name="ditheringInput"><TextBlock Text="Дизеринг для фиксированной палитры"/></CheckBox>
+                                <TextBlock Style="{StaticResource Hint}" Text="Дополнительная палитра применяется после квантования и может ещё сократить число цветов."/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Выбор пикселя">
+                            <StackPanel>
+                                <WrapPanel><RadioButton x:Name="automaticInput" Content="Автоматически" IsChecked="True"/><RadioButton x:Name="manualInput" Content="Вручную"/></WrapPanel>
+                                <StackPanel x:Name="manualControls">
+                                    <TextBlock x:Name="brightnessLabel"/><Slider x:Name="brightnessInput" AutomationProperties.Name="Яркость"/>
+                                    <TextBlock x:Name="contrastLabel"/><Slider x:Name="contrastInput" AutomationProperties.Name="Контраст"/>
+                                    <TextBlock x:Name="saturationLabel"/><Slider x:Name="saturationInput" AutomationProperties.Name="Насыщенность"/>
+                                    <TextBlock x:Name="edgeLabel"/><Slider x:Name="edgeInput" AutomationProperties.Name="Контур"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Выполнение">
+                            <StackPanel>
+                                <DockPanel Margin="0,3"><TextBlock Text="Потоки" Width="132"/><local:IntegerInput x:Name="threadsInput" Minimum="1" AutomationProperties.Name="Число потоков"/></DockPanel>
+                                <TextBox x:Name="processingLog" Height="125" Margin="0,8,0,0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Padding="6"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+            <GridSplitter x:Name="settingsSplitter" Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="#191919"/>
+            <Grid x:Name="previewArea" Grid.Column="2" Margin="12,0,18,12">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="140"/><RowDefinition Height="6"/><RowDefinition Height="*" MinHeight="140"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <WrapPanel Margin="0,0,0,8">
+                    <TextBlock Text="Масштаб" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="zoomInput" SelectedIndex="0" Width="100" Margin="0,0,16,0" ToolTip="Ctrl + колёсико над изображением"><ComboBoxItem Content="Вписать"/><ComboBoxItem Content="6,25%"/><ComboBoxItem Content="12,5%"/><ComboBoxItem Content="25%"/><ComboBoxItem Content="50%"/><ComboBoxItem Content="100%"/><ComboBoxItem Content="200%"/><ComboBoxItem Content="400%"/><ComboBoxItem Content="800%"/><ComboBoxItem Content="1600%"/><ComboBoxItem Content="3200%"/><ComboBoxItem Content="6400%"/></ComboBox>
+                    <TextBlock Text="Фон" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="backgroundInput" SelectedIndex="0" Width="116"><ComboBoxItem Content="Шахматка"/><ComboBoxItem Content="Тёмный"/><ComboBoxItem Content="Светлый"/></ComboBox>
+                </WrapPanel>
+                <DockPanel Grid.Row="1">
+                    <TextBlock x:Name="resultCaption" DockPanel.Dock="Top" Text="РЕЗУЛЬТАТ" Style="{StaticResource Caption}"/>
+                    <ListBox x:Name="generationStrip" DockPanel.Dock="Top" AutomationProperties.Name="История результатов">
+                        <ListBox.Style><Style TargetType="ListBox" BasedOn="{StaticResource Filmstrip}">
+                            <Style.Triggers>
+                                <Trigger Property="HasItems" Value="False"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+                            </Style.Triggers>
+                        </Style></ListBox.Style>
+                    </ListBox>
+                    <local:PixelPreview x:Name="resultPreview" EmptyText="Здесь появится результат&#10;Нажмите «Обработать» или «Выровнять сетку»" ToolTip="Ctrl + колёсико — масштаб. Перетащите результат в исходники, чтобы обработать его дальше."/>
+                </DockPanel>
+                <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch" Background="#191919"/>
+                <DockPanel x:Name="sourcePane" Grid.Row="3" Background="Transparent">
+                    <TextBlock x:Name="sourceCaption" DockPanel.Dock="Top" Text="ИСХОДНИК" Style="{StaticResource Caption}"/>
+                    <CheckBox x:Name="showCropInput" DockPanel.Dock="Top" Content="Показать область обработки" IsEnabled="False"/>
+                    <local:PixelPreview x:Name="sourcePreview" EmptyText="Откройте исходное изображение"/>
+                </DockPanel>
+                <Border x:Name="sourceTray" Grid.Row="4" Background="Transparent" BorderBrush="#3A3A3A" BorderThickness="0,1,0,0" Margin="0,8,0,0" Padding="0,5,0,0">
+                    <DockPanel>
+                        <TextBlock x:Name="sourcesCaption" Text="Исходники" DockPanel.Dock="Top" FontSize="13" Foreground="#ABABAB" Margin="0,0,0,5"/>
+                        <ListBox x:Name="sourceStrip" Style="{StaticResource Filmstrip}" AutomationProperties.Name="Добавленные исходники"/>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+        </ScrollViewer>
+        <ScrollViewer x:Name="homeScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ScrollChanged="HomeScrolled">
+            <StackPanel x:Name="homeContent" Margin="32,8,32,24">
+                <Border BorderBrush="#3A3A3A" BorderThickness="1" ClipToBounds="True">
+                    <Grid x:Name="heroPanel" Height="250" Background="#111111" MouseMove="HeroMouseMove" MouseLeave="HeroMouseLeave">
+                        <Image Source="Assets/landscape.png" Stretch="UniformToFill" Opacity="0.85" Margin="-18" RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False">
+                            <Image.RenderTransform><TranslateTransform x:Name="landscapeOffset"/></Image.RenderTransform>
+                        </Image>
+                        <Rectangle IsHitTestVisible="False"><Rectangle.Fill><LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5"><GradientStop Color="#F0101010" Offset="0"/><GradientStop Color="#B0101010" Offset="0.40"/><GradientStop Color="#00101010" Offset="0.9"/></LinearGradientBrush></Rectangle.Fill></Rectangle>
+                        <StackPanel x:Name="heroCopy" Margin="32,28" VerticalAlignment="Center" HorizontalAlignment="Left" MaxWidth="520">
+                            <TextBlock x:Name="heroTitle" Text="Пиксельная обработка" FontSize="34" FontWeight="SemiBold" LineHeight="42" Margin="0,0,0,10"/>
+                            <TextBlock Text="Уменьшение изображений и выравнивание сетки." Foreground="#C9C9C9" FontSize="15" LineHeight="23"/>
+                            <Button x:Name="homeOpenButton" Content="Открыть изображение…" Style="{StaticResource PrimaryButton}" Click="HomeOpenImage" HorizontalAlignment="Left" Margin="0,22,0,0" Padding="17,12" ToolTip="Открыть изображения (Ctrl+O)"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border x:Name="iconBanner" BorderBrush="#343434" BorderThickness="1" ClipToBounds="True" Margin="0,16,0,0" Background="#151515">
+                    <Grid Height="220">
+                        <StackPanel x:Name="iconBannerArt" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,46,0" IsHitTestVisible="False" Opacity="0.7">
+                            <Image Source="Assets/app-icon.png" Width="32" Height="32" Margin="0,70,22,0" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <Image Source="Assets/app-icon.png" Width="64" Height="64" Margin="0,38,22,0" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                            <Border BorderBrush="#555555" BorderThickness="1" Padding="10"><Image Source="Assets/app-icon.png" Width="128" Height="128" RenderOptions.BitmapScalingMode="NearestNeighbor"/></Border>
+                        </StackPanel>
+                        <StackPanel x:Name="iconBannerCopy" Margin="32,28" VerticalAlignment="Center" HorizontalAlignment="Left">
+                            <TextBlock x:Name="iconBannerTitle" Text="Создание иконок" FontSize="34" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <TextBlock Text="ICO из исходника или готового результата." Foreground="#C9C9C9" FontSize="15" TextWrapping="Wrap"/>
+                            <Button x:Name="homeIconButton" Content="Создать иконку…" Click="OpenIconWorkspace" HorizontalAlignment="Left" Margin="0,22,0,0" Padding="17,12"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid x:Name="libraryHeading" Margin="0,26,0,18">
+                    <TextBlock Text="Библиотека изображений" FontSize="25" FontWeight="SemiBold"/>
+                </Grid>
+                <Border x:Name="emptyLibrary" BorderBrush="#3A3A3A" BorderThickness="1" Padding="28" Background="#151515">
+                    <StackPanel>
+                        <TextBlock Text="Нет изображений" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock Text="Перетащите файлы в окно или откройте их кнопкой выше." Foreground="#ABABAB" FontSize="14" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+                <ItemsControl x:Name="libraryCards">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate>
+                        <Button Width="{Binding CardWidth, RelativeSource={RelativeSource AncestorType={x:Type local:MainWindow}}}" Margin="0,0,12,14" Padding="0" Tag="{Binding}" Click="OpenLibraryCard" HorizontalContentAlignment="Stretch" ToolTip="Продолжить работу с изображением" AutomationProperties.Name="{Binding Label}">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="156"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <Border Background="#0D0D0D" ClipToBounds="True"><Image Source="{Binding Thumbnail}" Stretch="Uniform" Margin="12" RenderOptions.BitmapScalingMode="NearestNeighbor"/></Border>
+                                <StackPanel Grid.Row="1" Margin="17">
+                                    <TextBlock Text="{Binding Label}" FontSize="16" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Foreground="#AFAFAF" FontSize="13" Margin="0,9,0,0"><Run Text="{Binding Width, Mode=OneWay}"/><Run Text=" × "/><Run Text="{Binding Height, Mode=OneWay}"/><Run Text=" px · Результаты: "/><Run Text="{Binding Generations.Count, Mode=OneWay}"/></TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                    </DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <local:IconWorkspace x:Name="iconWorkspace" Grid.Row="1" Visibility="Collapsed"/>
+        <Border Grid.Row="2" BorderBrush="#3A3A3A" BorderThickness="0,1,0,0" Padding="18,8">
+            <DockPanel>
+                <ProgressBar x:Name="busyIndicator" Width="90" Height="5" DockPanel.Dock="Right" Margin="12,0,0,0" Foreground="#EEEEEE" Background="#333333" IsIndeterminate="True" Visibility="Collapsed"/>
+                <TextBlock x:Name="statusLabel" Text="Готово к работе" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
