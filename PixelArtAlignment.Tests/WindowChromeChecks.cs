@@ -31,6 +31,8 @@ internal static class WindowChromeChecks
             var close = (Button)window.FindName("closeButton");
             Require(HitTest(handle, close.PointToScreen(new Point(20, 20))) == 1, "Caption button is swallowed by native dragging");
             Require(GetWindowRect(handle, out var normal), "Cannot read window bounds");
+            double normalWidth = window.ActualWidth;
+            double normalHeight = window.ActualHeight;
             Require(caption.PointToScreen(new Point(0, 0)).Y - normal.Top < 8, "An extra native title bar remains above the custom caption");
             Require(HitTest(handle, new Point(normal.Left + 2, normal.Top + 120)) == 10, "Left resize border is not active");
             Require(HitTest(handle, new Point(normal.Right - 2, normal.Bottom - 2)) == 17, "Corner resize border is not active");
@@ -47,7 +49,9 @@ internal static class WindowChromeChecks
                 bottomRight.X <= monitor.Work.Right + 1 && bottomRight.Y <= monitor.Work.Bottom + 1,
                 $"Maximized content extends outside the work area: {topLeft}–{bottomRight}, work {monitor.Work.Left},{monitor.Work.Top}–{monitor.Work.Right},{monitor.Work.Bottom}");
             Click("maximizeButton");
-            Require(window.WindowState == WindowState.Normal && Math.Abs(window.Width - 1220) < 1 && Math.Abs(window.Height - 880) < 1, "Restore lost the window dimensions");
+            // Windows can constrain the initial window to the runner's display size.
+            Require(window.WindowState == WindowState.Normal && Math.Abs(window.ActualWidth - normalWidth) < 1 && Math.Abs(window.ActualHeight - normalHeight) < 1,
+                $"Restore lost the window dimensions: expected {normalWidth}x{normalHeight}, got {window.ActualWidth}x{window.ActualHeight}");
 
             point = caption.PointToScreen(new Point(220, 20));
             SendMessage(handle, 0xA3, 2, Pack(point));
